@@ -15,7 +15,11 @@ function makeStem(element) {
 
 	stem.play = function playStem() {
 		stem.active = true;
-		stem.audio.play();
+		try {
+			stem.audio.play();
+		} catch (e) {
+			// do nothing
+		}
 	};
 
 	stem.stop = function stopStem() {
@@ -30,7 +34,6 @@ function makeStem(element) {
 	};
 
 	stem.mute = function muteStem() {
-		console.log('stem muted')
 		stem.active = false;
 		stem.audio.volume = 0;
 	};

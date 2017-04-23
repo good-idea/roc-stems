@@ -29,6 +29,11 @@
   color: rgb(255, 80, 70);
 }
 
+.stem-track.loading:after {
+	content: ' loading...';
+	font-family: monospace;
+}
+
 .stem-button {
   filter: blur(4px);
   transition: .2s;

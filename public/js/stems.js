@@ -96,8 +96,17 @@ function makeButton(el, buttonIndex, publisher) {
 
 	publisher.subscribe('allButtonsDisabled', button.disable);
 
+	publisher.subscribe('trackPlayed', function (trackIndex, stemCount) {
+		if (buttonIndex <= stemCount - 1) {
+			button.enable();
+			button.activate();
+		} else {
+			button.disable();
+			button.deactivate();
+		}
+	});
+
 	publisher.subscribe('stemPlayed', function (activeIndex) {
-		console.log(activeIndex, buttonIndex);
 		if (activeIndex === buttonIndex) button.activate();
 	});
 
@@ -130,7 +139,11 @@ function makeStem(element) {
 
 	stem.play = function playStem() {
 		stem.active = true;
-		stem.audio.play();
+		try {
+			stem.audio.play();
+		} catch (e) {
+			// do nothing
+		}
 	};
 
 	stem.stop = function stopStem() {
@@ -145,7 +158,6 @@ function makeStem(element) {
 	};
 
 	stem.mute = function muteStem() {
-		console.log('stem muted');
 		stem.active = false;
 		stem.audio.volume = 0;
 	};
@@ -262,7 +274,7 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
 				var diff = minMax.max - minMax.min;
 				if (minMax.max === 0) {
 					console.log('Not ready.. trying again');
-					setTimeout(checkSync, 500);
+					setTimeout(checkSync, 1000);
 				} else if (diff < 0.05) {
 					console.log('starting with diff of ' + diff);
 					stems.map(function (stem) {
@@ -277,10 +289,10 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
 					stems.map(function (stem) {
 						return stem.stop();
 					});
-					setTimeout(checkSync, 500);
+					setTimeout(checkSync, 1000);
 				}
 			}
-			setTimeout(checkSync, 500);
+			setTimeout(checkSync, 1000);
 		});
 	};
 
@@ -292,7 +304,9 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
 		if (!track.ready) return false;
 		// const isSynced = startSynced();
 		startSynced().then(function () {
+			track.element.classList.remove('loading');
 			track.element.classList.add('playing');
+			publisher.emit('trackPlayed', trackIndex, stems.length);
 		});
 		return true;
 	}
@@ -309,14 +323,11 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
   * Bind event listeners & emitters
   */
 
-	track.element.addEventListener('click', function () {
-		publisher.emit('trackPlayed', trackIndex);
-	});
+	track.element.addEventListener('click', play);
 
 	publisher.subscribe('trackPlayed', function (newIndex) {
-		debugOutput.innerHTML = '';
 		if (newIndex === trackIndex) {
-			play();
+			if (!track.active) play();
 		} else {
 			stop();
 		}
@@ -337,6 +348,10 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
   */
 
 	var debugOutput = (0, _q.queryOne)('#debug-output');
+
+	publisher.subscribe('trackPlayed', function () {
+		debugOutput.innerHTML = '';
+	});
 
 	function pad(input) {
 		var padLength = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 2;
