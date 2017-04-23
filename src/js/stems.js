@@ -13,18 +13,9 @@ const everything = queryOne('.stem-buttons .play-all') || false;
 const buttons = [];
 const tracks = [];
 
-let readyCount = 0;
-
-function readyHandler() {
-	readyCount += 1;
-	if (readyCount === tracks.length) {
-		queryOne('.stems-container').classList.add('ready');
-	}
-}
-
 // add each composed track to an array
 trackElements.map((track, index) => {
-	const newTrack = makeTrack(track, index, publisher, readyHandler);
+	const newTrack = makeTrack(track, index, publisher);
 	tracks.push(newTrack);
 });
 

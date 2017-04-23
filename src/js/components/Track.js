@@ -7,147 +7,100 @@ import makeStem from './Stem';
  * @param  {DOM element} element
  * @return {Stem}
  */
-function makeTrack(el, trackIndex, publisher, readyCallback) {
+function makeTrack(el, trackIndex, publisher) {
 	const track = {};
 	track.element = el;
-	const stemElements = query('audio', el);
+	const stemSources = JSON.parse(track.element.getAttribute('data-stems'));
 
 	const stems = [];
-
-	// See if all of the tracks are ready
-
-	function checkIfReady() {
-		const readyCount = stems.filter(stem => stem.isReady).length;
-
-		if (readyCount === stems.length) {
-			track.ready = true;
-			// reports back to the main script, so it can count all of the loaded tracks
-			readyCallback(trackIndex);
-			if (!track.hasErrors) {
-				track.element.classList.add('ready');
-			} else {
-				track.element.classList.add('has-errors');
-			}
-		}
-	}
+	let loadedStems = 0;
 
 	// add each element to the tracks array.
-	// When it's loaded, report it.
-	// If there is a network error, flag the track
-	stemElements.map((stemElement) => {
+	stemSources.map((stemElement) => {
 		const stem = makeStem(stemElement);
-		const url = stemElement.getAttribute('src').split('/');
-		stem.fileName = url.slice(-1)[0];
 		stems.push(stem);
-
-		stem.audio.load();
-
-		function canPlayThroughHandler() {
-			// console.log(`${trackIndex} - ${stem.fileName} is ready`)
-			stem.isReady = true;
-			stem.audio.removeEventListener('canplaythrough', canPlayThroughHandler);
-			checkIfReady();
-		}
-
-		stem.audio.addEventListener('canplaythrough', canPlayThroughHandler);
-
-		stem.audio.addEventListener('error', (e) => {
-			if (e.target.error.code === 3 || e.target.error.code === 4) {
-				console.warn(`${stem.fileName} could not be loaded`);
-				stem.isReady = true;
-				track.hasErrors = true;
-				checkIfReady();
-			}
-		});
 	});
 
-	// functions that we attach to the 'track' object are public &
-	// usable from the outside.
-	// Everything else is private.
+	/**
+	 * METHODS
+	 */
 
-
-	function playAllStems() {
-		stems.map((stem, index) => {
-			stem.unmute();
-			publisher.emit('stemPlayed', index);
-		});
-	}
-
-
-	const startSynced = () => new Promise((resolve, reject) => {
-		stems.map(stem => stem.mute());
-		function checkSync() {
-			stems.map(stem => stem.play());
-			const minMax = stems.reduce((previous, current) => {
-				return {
-					min: Math.min(previous.min || current.audio.currentTime, current.audio.currentTime),
-					max: Math.max(previous.max || current.audio.currentTime, current.audio.currentTime),
-				};
-			}, { min: undefined, max: undefined });
-			const diff = minMax.max - minMax.min;
-			if (minMax.max === 0) {
-				console.log('Not ready.. trying again');
-				setTimeout(checkSync, 1000);
-			} else if (diff < 0.05) {
-				console.log(`starting with diff of ${diff}`);
-				stems.map(stem => stem.stop());
-				setTimeout(() => {
-					playAllStems();
-					resolve();
-				}, 250);
-			} else {
-				console.log(`diff: ${diff}  - trying again..`);
-				stems.map(stem => stem.stop());
-				setTimeout(checkSync, 1000);
-			}
-		}
-		setTimeout(checkSync, 1000);
-	});
-
-	function play() {
+	track.play = function playTrack() {
 		track.active = true;
-		track.element.classList.add('loading');
-		// don't do anything if it's not ready. The user shouldn't be
-		// able to play the track until it's ready anyway, though.
-		if (!track.ready) return false;
-		// const isSynced = startSynced();
-		startSynced().then(() => {
-			track.element.classList.remove('loading');
-			track.element.classList.add('playing');
-			publisher.emit('trackPlayed', trackIndex, stems.length);
-		});
-		return true;
-	}
+		stems.map(stem => stem.play());
+		publisher.emit('enableButtons', stems.length);
+		track.element.classList.add('playing');
+	};
 
-	function stop() {
-		stems.map(stem => stem.stop());
+	track.stop = function stopTrack() {
 		track.active = false;
+		stems.map(stem => stem.reset());
+		publisher.emit('enableButtons', stems.length);
 		track.element.classList.remove('playing');
+	};
+
+
+	/**
+	 * FUNCTIONS
+	 */
+
+
+	/**
+	 * Track the number of loaded stems.
+	 * Set error status if necessary.
+	 */
+	function stemLoadedHandler(err) {
+		loadedStems += 1;
+		if (err) {
+			track.hasError = true;
+			track.element.classList.add('has-errors');
+		}
+		if (loadedStems === stems.length) {
+			track.isLoaded = true;
+			track.element.classList.remove('loading');
+			track.element.classList.add('loaded');
+		}
 	}
 
 	/**
-	 * Bind event listeners & emitters
+	 * If the track hasn't loaded, load the stems. Otherwise, play.
 	 */
+	function handleClick() {
+		if (!track.isLoaded) {
+			track.element.classList.add('loading');
+			stems.map(stem => stem.load(stemLoadedHandler));
+		} else {
+			publisher.emit('trackPlayed', trackIndex);
+			track.play();
+		}
+	}
 
-	track.element.addEventListener('click', play);
+	/*
+   * EVENTS
+	 */
+	track.element.addEventListener('click', handleClick);
 
 	publisher.subscribe('trackPlayed', (newIndex) => {
-		if (newIndex === trackIndex) {
-			if (!track.active) play();
-		} else {
-			stop();
+		if (newIndex !== trackIndex) {
+			track.active = false;
+			track.stop();
 		}
 	});
 
 	publisher.subscribe('stemActivated', (stemIndex) => {
 		if (track.active) stems[stemIndex].unmute();
 	});
+
 	publisher.subscribe('stemDeactivated', (stemIndex) => {
-		console.log(stemIndex, track.active);
 		if (track.active) stems[stemIndex].mute();
 	});
 
-	publisher.subscribe('allStemsActivated', playAllStems);
+	publisher.subscribe('allStemsActivated', () => {
+		if (track.active) {
+			stems.map(stem => stem.play());
+			publisher.emit('enableButtons', stems.length);
+		}
+	})
 
 	/**
 	 * Debug logging
@@ -204,6 +157,8 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
 	}, 100);
 
 	track.stemsCount = stems.length;
+
+
 	return track;
 }
 

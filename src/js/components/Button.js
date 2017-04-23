@@ -48,27 +48,41 @@ function makeButton(el, buttonIndex, publisher) {
 		}
 	};
 
-	button.element.addEventListener('click', () => {
-		button.toggleActive();
-		const event = (button.active) ? 'stemActivated' : 'stemDeactivated';
-		publisher.emit(event, buttonIndex);
-	});
+	/**
+	 * EVENTS
+	 */
 
-	publisher.subscribe('allButtonsDisabled', button.disable);
-
-	publisher.subscribe('trackPlayed', (trackIndex, stemCount) => {
-		if (buttonIndex <= stemCount - 1) {
+	publisher.subscribe('enableButtons', (count) => {
+		if (buttonIndex <= count - 1) {
 			button.enable();
 			button.activate();
 		} else {
 			button.disable();
 			button.deactivate();
 		}
-	})
-
-	publisher.subscribe('stemPlayed', (activeIndex) => {
-		if (activeIndex === buttonIndex) button.activate();
 	});
+
+	button.element.addEventListener('click', () => {
+		button.toggleActive();
+		const event = (button.active) ? 'stemActivated' : 'stemDeactivated';
+		publisher.emit(event, buttonIndex);
+	});
+	//
+	// publisher.subscribe('allButtonsDisabled', button.disable);
+	//
+	// publisher.subscribe('trackPlayed', (trackIndex, stemCount) => {
+	// 	if (buttonIndex <= stemCount - 1) {
+	// 		button.enable();
+	// 		button.activate();
+	// 	} else {
+	// 		button.disable();
+	// 		button.deactivate();
+	// 	}
+	// })
+	//
+	// publisher.subscribe('stemPlayed', (activeIndex) => {
+	// 	if (activeIndex === buttonIndex) button.activate();
+	// });
 
 	return button;
 }
