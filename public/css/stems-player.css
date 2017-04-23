@@ -38,6 +38,7 @@
   opacity: 1;
   filter: none;
   color: red;
+  pointer-events: none;
   text-decoration: line-through;
 }
 

@@ -7,7 +7,7 @@ import makeStem from './Stem';
  * @param  {DOM element} element
  * @return {Stem}
  */
-function makeTrack(el, trackIndex, publisher, readyCallback) {
+function makeTrack(el, trackIndex, publisher) {
 	const track = {};
 	track.element = el;
 	const stemSources = JSON.parse(track.element.getAttribute('data-stems'));
