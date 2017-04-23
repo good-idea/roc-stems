@@ -1,3 +1,8 @@
+/**
+ *
+ * I've commented out lines 115-122, otherwise the above is untouched
+ */
+
 body {
     font-size: 16px;
     line-height: 1.3;
@@ -154,55 +159,4 @@ body {
     src: url('fonts/NHaasGroteskDSPro-75Bd.eot?#iefix') format('embedded-opentype'), url('fonts/NHaasGroteskDSPro-75Bd.woff') format('woff'), url('fonts/NHaasGroteskDSPro-75Bd.ttf') format('truetype');
     font-weight: none;
     font-style: normal;
-}
-
-
-/**
- * Joseph - Additional
- * I've commented out lines 115-122, otherwise the above is untouched
- */
-
-.tracks li {
-  cursor: pointer;
-  filter: blur(1px);
-  pointer-events: none;
-  transition: .2s;
-}
-
-.tracks li.ready {
-  filter: none;
-  pointer-events: initial;
-}
-
-.tracks li.playing {
-  color: rgb(255, 80, 70);
-}
-
-.play-stem {
-  filter: blur(4px);
-  transition: .2s;
-  pointer-events: none;
-  opacity: 0.25;
-  cursor: pointer;
-}
-
-.everything {
-  cursor: pointer;
-}
-
-.shape1 {
-  width: 20px;
-}
-
-.play-stem:hover {
-  outline: 1px solid pink;
-}
-
-.play-stem.enabled {
-  opacity: 1;
-  pointer-events: initial;
-}
-
-.play-stem.active {
-  filter: none;
 }

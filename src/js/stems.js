@@ -13,13 +13,22 @@ const everything = queryOne('.stem-buttons .play-all') || false;
 const buttons = [];
 const tracks = [];
 
+let readyCount = 0;
+
+function readyHandler() {
+	readyCount += 1;
+	if (readyCount === tracks.length) {
+		queryOne('.stems-container').classList.add('ready');
+	}
+}
+
 // add each composed track to an array
 trackElements.map((track, index) => {
-	const newTrack = makeTrack(track, index, publisher);
+	const newTrack = makeTrack(track, index, publisher, readyHandler);
 	tracks.push(newTrack);
 });
 
-query('.stem-buttons .play-stem').map((button, index) => {
+query('.stem-buttons .stem-button').map((button, index) => {
 	const newButton = makeButton(button, index, publisher);
 	buttons.push(newButton);
 });

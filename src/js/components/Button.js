@@ -51,16 +51,13 @@ function makeButton(el, buttonIndex, publisher) {
 	button.element.addEventListener('click', () => {
 		button.toggleActive();
 		const event = (button.active) ? 'stemActivated' : 'stemDeactivated';
-		console.log(event, buttonIndex);
 		publisher.emit(event, buttonIndex);
 	});
 
 	publisher.subscribe('allButtonsDisabled', button.disable);
-	publisher.subscribe('allStemsActivated', () => {
-		button.activate();
-	});
 
 	publisher.subscribe('stemPlayed', (activeIndex) => {
+		console.log(activeIndex, buttonIndex);
 		if (activeIndex === buttonIndex) button.activate();
 	});
 

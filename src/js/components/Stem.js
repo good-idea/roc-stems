@@ -24,12 +24,13 @@ function makeStem(element) {
 		stem.audio.currentTime = 0;
 	};
 
-	stem.activate = function activateStem() {
+	stem.unmute = function unmuteStem() {
 		stem.active = true;
 		stem.audio.volume = 1;
 	};
 
-	stem.deactivate = function deactivateStem() {
+	stem.mute = function muteStem() {
+		console.log('stem muted')
 		stem.active = false;
 		stem.audio.volume = 0;
 	};

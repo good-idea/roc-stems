@@ -91,16 +91,13 @@ function makeButton(el, buttonIndex, publisher) {
 	button.element.addEventListener('click', function () {
 		button.toggleActive();
 		var event = button.active ? 'stemActivated' : 'stemDeactivated';
-		console.log(event, buttonIndex);
 		publisher.emit(event, buttonIndex);
 	});
 
 	publisher.subscribe('allButtonsDisabled', button.disable);
-	publisher.subscribe('allStemsActivated', function () {
-		button.activate();
-	});
 
 	publisher.subscribe('stemPlayed', function (activeIndex) {
+		console.log(activeIndex, buttonIndex);
 		if (activeIndex === buttonIndex) button.activate();
 	});
 
@@ -142,12 +139,13 @@ function makeStem(element) {
 		stem.audio.currentTime = 0;
 	};
 
-	stem.activate = function activateStem() {
+	stem.unmute = function unmuteStem() {
 		stem.active = true;
 		stem.audio.volume = 1;
 	};
 
-	stem.deactivate = function deactivateStem() {
+	stem.mute = function muteStem() {
+		console.log('stem muted');
 		stem.active = false;
 		stem.audio.volume = 0;
 	};
@@ -178,7 +176,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param  {DOM element} element
  * @return {Stem}
  */
-function makeTrack(el, trackIndex, publisher) {
+function makeTrack(el, trackIndex, publisher, readyCallback) {
 	var track = {};
 	track.element = el;
 	var stemElements = (0, _q.query)('audio', el);
@@ -191,23 +189,46 @@ function makeTrack(el, trackIndex, publisher) {
 		var readyCount = stems.filter(function (stem) {
 			return stem.isReady;
 		}).length;
+
 		if (readyCount === stems.length) {
 			track.ready = true;
-			track.element.classList.add('ready');
+			// reports back to the main script, so it can count all of the loaded tracks
+			readyCallback(trackIndex);
+			if (!track.hasErrors) {
+				track.element.classList.add('ready');
+			} else {
+				track.element.classList.add('has-errors');
+			}
 		}
 	}
 
 	// add each element to the tracks array.
-	// When it's loaded,
+	// When it's loaded, report it.
+	// If there is a network error, flag the track
 	stemElements.map(function (stemElement) {
 		var stem = (0, _Stem2.default)(stemElement);
 		var url = stemElement.getAttribute('src').split('/');
 		stem.fileName = url.slice(-1)[0];
 		stems.push(stem);
 
-		stem.audio.addEventListener('canplaythrough', function () {
+		stem.audio.load();
+
+		function canPlayThroughHandler() {
+			// console.log(`${trackIndex} - ${stem.fileName} is ready`)
 			stem.isReady = true;
+			stem.audio.removeEventListener('canplaythrough', canPlayThroughHandler);
 			checkIfReady();
+		}
+
+		stem.audio.addEventListener('canplaythrough', canPlayThroughHandler);
+
+		stem.audio.addEventListener('error', function (e) {
+			if (e.target.error.code === 3 || e.target.error.code === 4) {
+				console.warn(stem.fileName + ' could not be loaded');
+				stem.isReady = true;
+				track.hasErrors = true;
+				checkIfReady();
+			}
 		});
 	});
 
@@ -215,16 +236,64 @@ function makeTrack(el, trackIndex, publisher) {
 	// usable from the outside.
 	// Everything else is private.
 
+
+	function playAllStems() {
+		stems.map(function (stem, index) {
+			stem.unmute();
+			publisher.emit('stemPlayed', index);
+		});
+	}
+
+	var startSynced = function startSynced() {
+		return new Promise(function (resolve, reject) {
+			stems.map(function (stem) {
+				return stem.mute();
+			});
+			function checkSync() {
+				stems.map(function (stem) {
+					return stem.play();
+				});
+				var minMax = stems.reduce(function (previous, current) {
+					return {
+						min: Math.min(previous.min || current.audio.currentTime, current.audio.currentTime),
+						max: Math.max(previous.max || current.audio.currentTime, current.audio.currentTime)
+					};
+				}, { min: undefined, max: undefined });
+				var diff = minMax.max - minMax.min;
+				if (minMax.max === 0) {
+					console.log('Not ready.. trying again');
+					setTimeout(checkSync, 500);
+				} else if (diff < 0.05) {
+					console.log('starting with diff of ' + diff);
+					stems.map(function (stem) {
+						return stem.stop();
+					});
+					setTimeout(function () {
+						playAllStems();
+						resolve();
+					}, 250);
+				} else {
+					console.log('diff: ' + diff + '  - trying again..');
+					stems.map(function (stem) {
+						return stem.stop();
+					});
+					setTimeout(checkSync, 500);
+				}
+			}
+			setTimeout(checkSync, 500);
+		});
+	};
+
 	function play() {
+		track.active = true;
+		track.element.classList.add('loading');
 		// don't do anything if it's not ready. The user shouldn't be
 		// able to play the track until it's ready anyway, though.
 		if (!track.ready) return false;
-		stems.map(function (stem, index) {
-			stem.play();
-			publisher.emit('stemPlayed', index);
+		// const isSynced = startSynced();
+		startSynced().then(function () {
+			track.element.classList.add('playing');
 		});
-		track.active = true;
-		track.element.classList.add('playing');
 		return true;
 	}
 
@@ -245,6 +314,7 @@ function makeTrack(el, trackIndex, publisher) {
 	});
 
 	publisher.subscribe('trackPlayed', function (newIndex) {
+		debugOutput.innerHTML = '';
 		if (newIndex === trackIndex) {
 			play();
 		} else {
@@ -253,31 +323,66 @@ function makeTrack(el, trackIndex, publisher) {
 	});
 
 	publisher.subscribe('stemActivated', function (stemIndex) {
-		if (track.active) stems[stemIndex].activate();
+		if (track.active) stems[stemIndex].unmute();
 	});
 	publisher.subscribe('stemDeactivated', function (stemIndex) {
-		if (track.active) stems[stemIndex].deactivate();
+		console.log(stemIndex, track.active);
+		if (track.active) stems[stemIndex].mute();
 	});
-	// publisher.subscribe('stemToggled', stemIndex => stems[stemIndex].toggle());
-	publisher.subscribe('allStemsActivated', function () {
-		stems.map(function (stem, index) {
-			stem.activate();
-			publisher.emit('stemPlayed', index);
-		});
-	});
+
+	publisher.subscribe('allStemsActivated', playAllStems);
 
 	/**
   * Debug logging
   */
 
+	var debugOutput = (0, _q.queryOne)('#debug-output');
+
+	function pad(input) {
+		var padLength = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 2;
+		var char = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '0';
+		var direction = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'right';
+
+		var string = input.toString();
+		var diff = padLength - input.length;
+		for (var i = 0; i < diff; i += 1) {
+			if (direction === 'right') {
+				string += char;
+			} else {
+				string = char + string;
+			}
+		}
+		return string;
+	}
+
+	function formatDecimal(input, lLength, rLength) {
+		var arr = input.toString().split('.');
+		if (arr.length === 1) arr.push('0');
+		var whole = pad(arr[0], lLength, '0', 'left');
+		var dec = pad(arr[1], rLength, '0', 'right').substr(0, rLength);
+		return whole + '.' + dec;
+	}
+
 	setInterval(function () {
 		if (track.active) {
+			var debugString = ['*******'];
+			var min = void 0;
+			var max = void 0;
 			stems.map(function (stem, index) {
-				var activated = stem.active ? 'activated' : 'deactivated';
-				var currentTime = Math.round(stem.audio.currentTime * 100) / 100;
-				console.log('   stem ' + index + ': ' + currentTime + ' | ' + stem.fileName + ' - ' + activated);
+				if (stem.audio) {
+					var activated = stem.active ? 'activated' : 'deactivated';
+					var currentTime = Math.round(stem.audio.currentTime * 10000) / 10000;
+					var formattedTime = formatDecimal(currentTime, 3, 4);
+
+					min = min ? Math.min(min, currentTime) : currentTime;
+					max = max ? Math.max(max, currentTime) : currentTime;
+					if (currentTime === 0) stem.audio.play();
+					debugString.push('   stem ' + index + ': ' + formattedTime + ' | ' + stem.fileName + ' - ' + activated + ' | ' + stem.audio.buffered.end(0) + ' / ' + stem.audio.duration);
+				}
 			});
-			console.log('*******');
+			var diff = formatDecimal(max - min, 1, 6);
+			debugString.push('   max diff: ' + diff);
+			debugOutput.innerHTML = debugString.join('<br>');
 		}
 	}, 100);
 
@@ -393,13 +498,22 @@ var everything = (0, _q.queryOne)('.stem-buttons .play-all') || false;
 var buttons = [];
 var tracks = [];
 
+var readyCount = 0;
+
+function readyHandler() {
+	readyCount += 1;
+	if (readyCount === tracks.length) {
+		(0, _q.queryOne)('.stems-container').classList.add('ready');
+	}
+}
+
 // add each composed track to an array
 trackElements.map(function (track, index) {
-	var newTrack = (0, _Track2.default)(track, index, _publisher2.default);
+	var newTrack = (0, _Track2.default)(track, index, _publisher2.default, readyHandler);
 	tracks.push(newTrack);
 });
 
-(0, _q.query)('.stem-buttons .play-stem').map(function (button, index) {
+(0, _q.query)('.stem-buttons .stem-button').map(function (button, index) {
 	var newButton = (0, _Button2.default)(button, index, _publisher2.default);
 	buttons.push(newButton);
 });
