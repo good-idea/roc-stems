@@ -87,7 +87,7 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
 			const diff = minMax.max - minMax.min;
 			if (minMax.max === 0) {
 				console.log('Not ready.. trying again');
-				setTimeout(checkSync, 500);
+				setTimeout(checkSync, 1000);
 			} else if (diff < 0.05) {
 				console.log(`starting with diff of ${diff}`);
 				stems.map(stem => stem.stop());
@@ -98,10 +98,10 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
 			} else {
 				console.log(`diff: ${diff}  - trying again..`);
 				stems.map(stem => stem.stop());
-				setTimeout(checkSync, 500);
+				setTimeout(checkSync, 1000);
 			}
 		}
-		setTimeout(checkSync, 500);
+		setTimeout(checkSync, 1000);
 	});
 
 	function play() {
@@ -112,7 +112,9 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
 		if (!track.ready) return false;
 		// const isSynced = startSynced();
 		startSynced().then(() => {
+			track.element.classList.remove('loading');
 			track.element.classList.add('playing');
+			publisher.emit('trackPlayed', trackIndex, stems.length);
 		});
 		return true;
 	}
@@ -127,14 +129,11 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
 	 * Bind event listeners & emitters
 	 */
 
-	track.element.addEventListener('click', () => {
-		publisher.emit('trackPlayed', trackIndex);
-	});
+	track.element.addEventListener('click', play);
 
 	publisher.subscribe('trackPlayed', (newIndex) => {
-		debugOutput.innerHTML = '';
 		if (newIndex === trackIndex) {
-			play();
+			if (!track.active) play();
 		} else {
 			stop();
 		}
@@ -155,6 +154,10 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
 	 */
 
 	const debugOutput = queryOne('#debug-output');
+
+	publisher.subscribe('trackPlayed', () => {
+		debugOutput.innerHTML = '';
+	});
 
 	function pad(input, padLength = 2, char = '0', direction = 'right') {
 		let string = input.toString();

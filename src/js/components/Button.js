@@ -56,8 +56,17 @@ function makeButton(el, buttonIndex, publisher) {
 
 	publisher.subscribe('allButtonsDisabled', button.disable);
 
+	publisher.subscribe('trackPlayed', (trackIndex, stemCount) => {
+		if (buttonIndex <= stemCount - 1) {
+			button.enable();
+			button.activate();
+		} else {
+			button.disable();
+			button.deactivate();
+		}
+	})
+
 	publisher.subscribe('stemPlayed', (activeIndex) => {
-		console.log(activeIndex, buttonIndex);
 		if (activeIndex === buttonIndex) button.activate();
 	});
 
