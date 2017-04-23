@@ -9,7 +9,7 @@ import makeButton from './components/Button';
 
 // first, just find the elements
 const trackElements = query('.stem-track');
-const everything = queryOne('.stem-buttons .play-all') || false;
+const everything = queryOne('.stem-button--play-all') || false;
 const buttons = [];
 const tracks = [];
 

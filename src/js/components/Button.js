@@ -67,22 +67,6 @@ function makeButton(el, buttonIndex, publisher) {
 		const event = (button.active) ? 'stemActivated' : 'stemDeactivated';
 		publisher.emit(event, buttonIndex);
 	});
-	//
-	// publisher.subscribe('allButtonsDisabled', button.disable);
-	//
-	// publisher.subscribe('trackPlayed', (trackIndex, stemCount) => {
-	// 	if (buttonIndex <= stemCount - 1) {
-	// 		button.enable();
-	// 		button.activate();
-	// 	} else {
-	// 		button.disable();
-	// 		button.deactivate();
-	// 	}
-	// })
-	//
-	// publisher.subscribe('stemPlayed', (activeIndex) => {
-	// 	if (activeIndex === buttonIndex) button.activate();
-	// });
 
 	return button;
 }

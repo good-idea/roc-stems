@@ -12,6 +12,11 @@ function makeTrack(el, trackIndex, publisher) {
 	track.element = el;
 	const stemSources = JSON.parse(track.element.getAttribute('data-stems'));
 
+	const autoload = track.element.hasAttribute('autoload') && track.element.getAttribute('autoload') !== 'false';
+	const autoplay = track.element.hasAttribute('autoplay') && track.element.getAttribute('autoplay') !== 'false';;
+
+	console.log(autoload, autoplay)
+
 	const stems = [];
 	let loadedStems = 0;
 
@@ -22,28 +27,8 @@ function makeTrack(el, trackIndex, publisher) {
 	});
 
 	/**
-	 * METHODS
-	 */
-
-	track.play = function playTrack() {
-		track.active = true;
-		stems.map(stem => stem.play());
-		publisher.emit('enableButtons', stems.length);
-		track.element.classList.add('playing');
-	};
-
-	track.stop = function stopTrack() {
-		track.active = false;
-		stems.map(stem => stem.reset());
-		publisher.emit('enableButtons', stems.length);
-		track.element.classList.remove('playing');
-	};
-
-
-	/**
 	 * FUNCTIONS
 	 */
-
 
 	/**
 	 * Track the number of loaded stems.
@@ -59,6 +44,7 @@ function makeTrack(el, trackIndex, publisher) {
 			track.isLoaded = true;
 			track.element.classList.remove('loading');
 			track.element.classList.add('loaded');
+			if (autoplay) track.play();
 		}
 	}
 
@@ -67,13 +53,36 @@ function makeTrack(el, trackIndex, publisher) {
 	 */
 	function handleClick() {
 		if (!track.isLoaded) {
-			track.element.classList.add('loading');
-			stems.map(stem => stem.load(stemLoadedHandler));
+			track.load();
 		} else {
-			publisher.emit('trackPlayed', trackIndex);
 			track.play();
 		}
 	}
+
+	/**
+	 * METHODS
+	 */
+
+	track.load = function loadTrack() {
+		track.element.classList.add('loading');
+		stems.map(stem => stem.load(stemLoadedHandler));
+	};
+
+	track.play = function playTrack() {
+		publisher.emit('trackPlayed', trackIndex);
+		track.active = true;
+		stems.map(stem => stem.play());
+		publisher.emit('enableButtons', stems.length);
+		track.element.classList.add('playing');
+	};
+
+	track.stop = function stopTrack() {
+		track.active = false;
+		stems.map(stem => stem.reset());
+		publisher.emit('enableButtons', stems.length);
+		track.element.classList.remove('playing');
+	};
+
 
 	/*
    * EVENTS
@@ -100,7 +109,9 @@ function makeTrack(el, trackIndex, publisher) {
 			stems.map(stem => stem.play());
 			publisher.emit('enableButtons', stems.length);
 		}
-	})
+	});
+
+	if (autoload) track.load();
 
 	/**
 	 * Debug logging

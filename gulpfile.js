@@ -38,7 +38,7 @@ var gulp = require('gulp'),
 gulp.task('watch', function(done) {
 	livereload.listen();
 	gulp.watch('./src/css/*.css', ['css']);
-	startBundle(false, done);
+	startBundle(true, done); // change first argument to 'false' if you don't want to minify
 });
 
 gulp.task('default', ['css', 'watch']);
@@ -47,8 +47,6 @@ gulp.task('production', ['css', 'js-production']);
 gulp.task('js-production', function(done) {
 	startBundle(true, done);
 })
-
-
 
 /*
 // :::CSS
@@ -120,6 +118,7 @@ function makeBundle(bundler, entry, production) {
 		.pipe((gutil.env.production || production === true) ? uglify().on('error', mapError) : gutil.noop())
 		.pipe(sourcemaps.write('.')) // Set folder for sourcemaps to output to
 		.pipe(gulp.dest('./public/js/')) // Set the output folder
+		.pipe(gulp.dest('./dist'))
 		.pipe(filter("**/*.js"))
 		// .pipe(notify({
 		// 	message: 'Generated file: <%= file.relative %>',
