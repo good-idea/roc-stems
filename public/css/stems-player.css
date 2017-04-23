@@ -1,21 +1,37 @@
-.stems-container {
-  filter: blur(1px);
-  pointer-events: initial;
-}
 
-.stems-container.ready {
-  filter: none;
-  pointer-events: initial;
-}
 
 .stem-track {
   cursor: pointer;
   transition: .2s;
-  opacity: 0;
+  filter: blur(2px);
+  color: grey;
 }
 
-.stem-track.ready {
+.stem-track.loading {
+  filter: initial;
+}
+
+.stem-track.loading:after {
+	content: ' loading...';
+	font-family: monospace;
+  margin-left: 1em;
+  font-size: .8em;
+  animation: blink .8s infinite;
+}
+
+@keyframes blink {
+  2%, 48% {
+    opacity: 1;
+  }
+  52%, 98% {
+    opacity: 0;
+  }
+}
+
+.stem-track.loaded {
+  filter: initial;
   opacity: 1;
+  color: black;
 }
 
 .stem-track.has-errors {
@@ -29,10 +45,7 @@
   color: rgb(255, 80, 70);
 }
 
-.stem-track.loading:after {
-	content: ' loading...';
-	font-family: monospace;
-}
+
 
 .stem-button {
   filter: blur(4px);

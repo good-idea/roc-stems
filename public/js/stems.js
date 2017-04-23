@@ -88,16 +88,12 @@ function makeButton(el, buttonIndex, publisher) {
 		}
 	};
 
-	button.element.addEventListener('click', function () {
-		button.toggleActive();
-		var event = button.active ? 'stemActivated' : 'stemDeactivated';
-		publisher.emit(event, buttonIndex);
-	});
+	/**
+  * EVENTS
+  */
 
-	publisher.subscribe('allButtonsDisabled', button.disable);
-
-	publisher.subscribe('trackPlayed', function (trackIndex, stemCount) {
-		if (buttonIndex <= stemCount - 1) {
+	publisher.subscribe('enableButtons', function (count) {
+		if (buttonIndex <= count - 1) {
 			button.enable();
 			button.activate();
 		} else {
@@ -106,9 +102,27 @@ function makeButton(el, buttonIndex, publisher) {
 		}
 	});
 
-	publisher.subscribe('stemPlayed', function (activeIndex) {
-		if (activeIndex === buttonIndex) button.activate();
+	button.element.addEventListener('click', function () {
+		button.toggleActive();
+		var event = button.active ? 'stemActivated' : 'stemDeactivated';
+		publisher.emit(event, buttonIndex);
 	});
+	//
+	// publisher.subscribe('allButtonsDisabled', button.disable);
+	//
+	// publisher.subscribe('trackPlayed', (trackIndex, stemCount) => {
+	// 	if (buttonIndex <= stemCount - 1) {
+	// 		button.enable();
+	// 		button.activate();
+	// 	} else {
+	// 		button.disable();
+	// 		button.deactivate();
+	// 	}
+	// })
+	//
+	// publisher.subscribe('stemPlayed', (activeIndex) => {
+	// 	if (activeIndex === buttonIndex) button.activate();
+	// });
 
 	return button;
 }
@@ -130,20 +144,53 @@ var _q = require('@artcommacode/q');
  * @param  {DOM element} element
  * @return {Stem}
  */
-function makeStem(element) {
+function makeStem(src) {
 	var stem = {};
-	stem.audio = element;
-	stem.active = false;
-	var url = stem.audio.getAttribute('src').split('/');
-	stem.fileName = url.slice(-1)[0];
+	stem.audio = new Audio();
+
+	stem.load = function loadStem(loadedCallback) {
+		stem.fileName = src.replace(/\/$/).split('/').pop();
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', encodeURI(src), true);
+		xhr.setRequestHeader('Content-Type', 'application/json');
+		xhr.responseType = 'blob';
+		xhr.onload = function (e) {
+			var blob = new Blob([xhr.response], { type: 'audio/mp3' });
+			var objectUrl = URL.createObjectURL(blob);
+			stem.audio.src = objectUrl;
+			stem.audio.onload = function () {
+				URL.revokeObjectURL(objectUrl);
+			};
+			stem.ready = true;
+			var error = e.target.status !== 200 ? e.target.status + ' ' + e.target.statusText : false;
+			loadedCallback(error);
+		};
+		xhr.send();
+	};
+
+	// const stem = {};
+	// stem.audio = element;
+	// stem.active = false;
+	// const url = stem.audio.getAttribute('src').split('/');
+	// stem.fileName = url.slice(-1)[0];
 
 	stem.play = function playStem() {
+		console.log('playing ' + stem.fileName);
+		if (stem.ready) {
+			stem.unmute();
+			stem.audio.play();
+		}
 		stem.active = true;
 		try {
 			stem.audio.play();
 		} catch (e) {
 			// do nothing
 		}
+	};
+
+	stem.reset = function resetStem() {
+		stem.stop();
+		stem.audio.volume = 1;
 	};
 
 	stem.stop = function stopStem() {
@@ -191,157 +238,103 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function makeTrack(el, trackIndex, publisher, readyCallback) {
 	var track = {};
 	track.element = el;
-	var stemElements = (0, _q.query)('audio', el);
+	var stemSources = JSON.parse(track.element.getAttribute('data-stems'));
 
 	var stems = [];
-
-	// See if all of the tracks are ready
-
-	function checkIfReady() {
-		var readyCount = stems.filter(function (stem) {
-			return stem.isReady;
-		}).length;
-
-		if (readyCount === stems.length) {
-			track.ready = true;
-			// reports back to the main script, so it can count all of the loaded tracks
-			readyCallback(trackIndex);
-			if (!track.hasErrors) {
-				track.element.classList.add('ready');
-			} else {
-				track.element.classList.add('has-errors');
-			}
-		}
-	}
+	var loadedStems = 0;
 
 	// add each element to the tracks array.
-	// When it's loaded, report it.
-	// If there is a network error, flag the track
-	stemElements.map(function (stemElement) {
+	stemSources.map(function (stemElement) {
 		var stem = (0, _Stem2.default)(stemElement);
-		var url = stemElement.getAttribute('src').split('/');
-		stem.fileName = url.slice(-1)[0];
 		stems.push(stem);
-
-		stem.audio.load();
-
-		function canPlayThroughHandler() {
-			// console.log(`${trackIndex} - ${stem.fileName} is ready`)
-			stem.isReady = true;
-			stem.audio.removeEventListener('canplaythrough', canPlayThroughHandler);
-			checkIfReady();
-		}
-
-		stem.audio.addEventListener('canplaythrough', canPlayThroughHandler);
-
-		stem.audio.addEventListener('error', function (e) {
-			if (e.target.error.code === 3 || e.target.error.code === 4) {
-				console.warn(stem.fileName + ' could not be loaded');
-				stem.isReady = true;
-				track.hasErrors = true;
-				checkIfReady();
-			}
-		});
 	});
 
-	// functions that we attach to the 'track' object are public &
-	// usable from the outside.
-	// Everything else is private.
+	/**
+  * METHODS
+  */
 
-
-	function playAllStems() {
-		stems.map(function (stem, index) {
-			stem.unmute();
-			publisher.emit('stemPlayed', index);
+	track.play = function playTrack() {
+		track.active = true;
+		stems.map(function (stem) {
+			return stem.play();
 		});
-	}
-
-	var startSynced = function startSynced() {
-		return new Promise(function (resolve, reject) {
-			stems.map(function (stem) {
-				return stem.mute();
-			});
-			function checkSync() {
-				stems.map(function (stem) {
-					return stem.play();
-				});
-				var minMax = stems.reduce(function (previous, current) {
-					return {
-						min: Math.min(previous.min || current.audio.currentTime, current.audio.currentTime),
-						max: Math.max(previous.max || current.audio.currentTime, current.audio.currentTime)
-					};
-				}, { min: undefined, max: undefined });
-				var diff = minMax.max - minMax.min;
-				if (minMax.max === 0) {
-					console.log('Not ready.. trying again');
-					setTimeout(checkSync, 1000);
-				} else if (diff < 0.05) {
-					console.log('starting with diff of ' + diff);
-					stems.map(function (stem) {
-						return stem.stop();
-					});
-					setTimeout(function () {
-						playAllStems();
-						resolve();
-					}, 250);
-				} else {
-					console.log('diff: ' + diff + '  - trying again..');
-					stems.map(function (stem) {
-						return stem.stop();
-					});
-					setTimeout(checkSync, 1000);
-				}
-			}
-			setTimeout(checkSync, 1000);
-		});
+		publisher.emit('enableButtons', stems.length);
+		track.element.classList.add('playing');
 	};
 
-	function play() {
-		track.active = true;
-		track.element.classList.add('loading');
-		// don't do anything if it's not ready. The user shouldn't be
-		// able to play the track until it's ready anyway, though.
-		if (!track.ready) return false;
-		// const isSynced = startSynced();
-		startSynced().then(function () {
-			track.element.classList.remove('loading');
-			track.element.classList.add('playing');
-			publisher.emit('trackPlayed', trackIndex, stems.length);
-		});
-		return true;
-	}
-
-	function stop() {
-		stems.map(function (stem) {
-			return stem.stop();
-		});
+	track.stop = function stopTrack() {
 		track.active = false;
+		stems.map(function (stem) {
+			return stem.reset();
+		});
+		publisher.emit('enableButtons', stems.length);
 		track.element.classList.remove('playing');
+	};
+
+	/**
+  * FUNCTIONS
+  */
+
+	/**
+  * Track the number of loaded stems.
+  * Set error status if necessary.
+  */
+	function stemLoadedHandler(err) {
+		loadedStems += 1;
+		if (err) {
+			track.hasError = true;
+			track.element.classList.add('has-errors');
+		}
+		if (loadedStems === stems.length) {
+			track.isLoaded = true;
+			track.element.classList.remove('loading');
+			track.element.classList.add('loaded');
+		}
 	}
 
 	/**
-  * Bind event listeners & emitters
+  * If the track hasn't loaded, load the stems. Otherwise, play.
   */
+	function handleClick() {
+		if (!track.isLoaded) {
+			track.element.classList.add('loading');
+			stems.map(function (stem) {
+				return stem.load(stemLoadedHandler);
+			});
+		} else {
+			publisher.emit('trackPlayed', trackIndex);
+			track.play();
+		}
+	}
 
-	track.element.addEventListener('click', play);
+	/*
+   * EVENTS
+  */
+	track.element.addEventListener('click', handleClick);
 
 	publisher.subscribe('trackPlayed', function (newIndex) {
-		if (newIndex === trackIndex) {
-			if (!track.active) play();
-		} else {
-			stop();
+		if (newIndex !== trackIndex) {
+			track.active = false;
+			track.stop();
 		}
 	});
 
 	publisher.subscribe('stemActivated', function (stemIndex) {
 		if (track.active) stems[stemIndex].unmute();
 	});
+
 	publisher.subscribe('stemDeactivated', function (stemIndex) {
-		console.log(stemIndex, track.active);
 		if (track.active) stems[stemIndex].mute();
 	});
 
-	publisher.subscribe('allStemsActivated', playAllStems);
+	publisher.subscribe('allStemsActivated', function () {
+		if (track.active) {
+			stems.map(function (stem) {
+				return stem.play();
+			});
+			publisher.emit('enableButtons', stems.length);
+		}
+	});
 
 	/**
   * Debug logging
@@ -402,6 +395,7 @@ function makeTrack(el, trackIndex, publisher, readyCallback) {
 	}, 100);
 
 	track.stemsCount = stems.length;
+
 	return track;
 }
 
