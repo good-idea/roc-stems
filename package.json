@@ -27,6 +27,7 @@
     "gulp-sourcemaps": "^2.6.0",
     "gulp-uglify": "^2.1.2",
     "gulp-util": "^3.0.8",
+    "guppy-pre-commit": "^0.4.0",
     "postcss-cssnext": "^2.10.0",
     "postcss-math": "0.0.8",
     "precss": "^1.4.0",
