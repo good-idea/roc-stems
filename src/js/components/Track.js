@@ -13,9 +13,7 @@ function makeTrack(el, trackIndex, publisher) {
 	const stemSources = JSON.parse(track.element.getAttribute('data-stems'));
 
 	const autoload = track.element.hasAttribute('autoload') && track.element.getAttribute('autoload') !== 'false';
-	const autoplay = track.element.hasAttribute('autoplay') && track.element.getAttribute('autoplay') !== 'false';;
-
-	console.log(autoload, autoplay)
+	const autoplay = track.element.hasAttribute('autoplay') && track.element.getAttribute('autoplay') !== 'false';
 
 	const stems = [];
 	let loadedStems = 0;
@@ -106,7 +104,6 @@ function makeTrack(el, trackIndex, publisher) {
 	publisher.subscribe('allStemsToggled', () => {
 		if (track.active) {
 			const allEnabled = (stems.filter(stem => stem.active).length === stems.length);
-			console.log(allEnabled)
 			if (allEnabled) {
 				stems.map(stem => stem.mute());
 				publisher.emit('disableButtons', stems.length);
