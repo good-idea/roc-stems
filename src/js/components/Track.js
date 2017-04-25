@@ -164,7 +164,11 @@ function makeTrack(el, trackIndex, publisher) {
 					min = (min) ? Math.min(min, currentTime) : currentTime;
 					max = (max) ? Math.max(max, currentTime) : currentTime;
 					if (currentTime === 0) stem.audio.play();
-					debugString.push(`   stem ${index}: ${formattedTime} | ${stem.fileName} - ${activated} | ${stem.audio.buffered.end(0)} / ${stem.audio.duration}`);
+					try {
+						debugString.push(`   stem ${index}: ${formattedTime} | ${stem.fileName} - ${activated} | ${stem.audio.buffered.end(0)} / ${stem.audio.duration}`);
+					} catch (e) {
+						// do nothing
+					}
 				}
 			});
 			const diff = formatDecimal(max - min, 1, 6);
