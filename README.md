@@ -14,10 +14,10 @@ Example:
 
 ```
 <li class="play-stem"
-	data-stems='["http://www.standard-quality.biz/external/roc-stems/catharsis-bass.mp3",
-							 "http://www.standard-quality.biz/external/roc-stems/catharsis-drums.mp3",
-							 "http://www.standard-quality.biz/external/roc-stems/catharsis-synth.mp3",
-							 "http://www.standard-quality.biz/external/roc-stems/catharsis-vox.mp3"]'>
+  data-stems='["http://www.standard-quality.biz/external/roc-stems/catharsis-bass.mp3",
+               "http://www.standard-quality.biz/external/roc-stems/catharsis-drums.mp3",
+               "http://www.standard-quality.biz/external/roc-stems/catharsis-synth.mp3",
+               "http://www.standard-quality.biz/external/roc-stems/catharsis-vox.mp3"]'>
 1. Catharsis</li>
 ```
 **Caveat**: Use single quotes to wrap the *entire* attribute, and double quotes to wrap each track.
@@ -31,13 +31,13 @@ When each track is played, it will enable one button for each of its stems.
 
  ```
  <li class="stem-track"
-	 autoload
-	 autoplay
-	 data-stems='["/roc-stems/catharsis-bass.mp3",
-							 "/roc-stems/catharsis-drums.mp3",
-							 "/roc-stems/catharsis-synth.mp3",
-							 "/roc-stems/catharsis-vox.mp3"]'>
-	 1. Catharsis
+   autoload
+   autoplay
+   data-stems='["/roc-stems/catharsis-bass.mp3",
+                "/roc-stems/catharsis-drums.mp3",
+                "/roc-stems/catharsis-synth.mp3",
+                "/roc-stems/catharsis-vox.mp3"]'>
+   1. Catharsis
  </li>
  ```
 
@@ -49,10 +49,10 @@ Example:
 
 ```
 <div class="stem-button">
-	<img src="img/shape0.png" >
+  <img src="img/shape0.png" >
 </div>
 <div class="stem-button">
-	<img src="img/shape1.png">
+  <img src="img/shape1.png">
 </div>
 
 <h2 class="everything stem-button--play-all">EVERYTHING</h2>
