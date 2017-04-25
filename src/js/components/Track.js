@@ -83,7 +83,6 @@ function makeTrack(el, trackIndex, publisher) {
 		track.element.classList.remove('playing');
 	};
 
-
 	/*
    * EVENTS
 	 */
@@ -104,10 +103,17 @@ function makeTrack(el, trackIndex, publisher) {
 		if (track.active) stems[stemIndex].mute();
 	});
 
-	publisher.subscribe('allStemsActivated', () => {
+	publisher.subscribe('allStemsToggled', () => {
 		if (track.active) {
-			stems.map(stem => stem.play());
-			publisher.emit('enableButtons', stems.length);
+			const allEnabled = (stems.filter(stem => stem.active).length === stems.length);
+			console.log(allEnabled)
+			if (allEnabled) {
+				stems.map(stem => stem.mute());
+				publisher.emit('disableButtons', stems.length);
+			} else {
+				stems.map(stem => stem.unmute());
+				publisher.emit('enableButtons', stems.length);
+			}
 		}
 	});
 

@@ -30,7 +30,7 @@ query('.stem-buttons .stem-button').map((button, index) => {
 
 if (everything) {
 	everything.addEventListener('click', () => {
-		publisher.emit('allStemsActivated');
+		publisher.emit('allStemsToggled');
 	});
 }
 

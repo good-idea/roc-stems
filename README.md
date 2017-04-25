@@ -98,7 +98,7 @@ It will output info in the format: `stem [index]: [playback time] | [filename] -
 
 Make sure you have [Node](https://nodejs.org/en/download/) installed.
 
-`npm run start`
+`npm run start` and visit `http://localhost:3000`
 
 Put all track stems in `public/roc-stems` (files are not included in the repo)
 

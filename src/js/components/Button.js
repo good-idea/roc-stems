@@ -62,6 +62,10 @@ function makeButton(el, buttonIndex, publisher) {
 		}
 	});
 
+	publisher.subscribe('disableButtons', () => {
+		button.deactivate();
+	})
+
 	button.element.addEventListener('click', () => {
 		button.toggleActive();
 		const event = (button.active) ? 'stemActivated' : 'stemDeactivated';

@@ -38,7 +38,7 @@ var gulp = require('gulp'),
 gulp.task('watch', function(done) {
 	livereload.listen();
 	gulp.watch('./src/css/*.css', ['css']);
-	startBundle(true, done); // change first argument to 'false' if you don't want to minify
+	startBundle(false, done); // change first argument to 'false' if you don't want to minify
 });
 
 gulp.task('default', ['css', 'watch']);
@@ -84,7 +84,6 @@ function startBundle(production, done) {
 		if (err) {
 			done(err);
 		}
-		console.log(files);
 		const args = merge(watchify.args, { debug: true, fullPaths: true })
 		const tasks = files.map(entry => {
 			const bundler = browserify(entry, args)

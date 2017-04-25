@@ -37,7 +37,6 @@ function makeStem(src) {
 	// stem.fileName = url.slice(-1)[0];
 
 	stem.play = function playStem() {
-		console.log(`playing ${stem.fileName}`)
 		if (stem.ready) {
 			stem.unmute();
 			stem.audio.play();
@@ -53,7 +52,7 @@ function makeStem(src) {
 	stem.reset = function resetStem() {
 		stem.stop();
 		stem.audio.volume = 1;
-	}
+	};
 
 	stem.stop = function stopStem() {
 		stem.active = false;
