@@ -1,8 +1,17 @@
 # Usage
 
-The compiled file is `dist/js/stems.js`. Include that in the footer of your markup.
+The compiled file is `dist/js/stems.js`. Include that in the footer of your markup. Files in the `/public` directory are only in place so we can run an example locally.
 
 **Important note:** Your stem files need to be hosted on the same domain, or on one that allows for cross-origin requests.
+
+### Caveats
+
+Mobile browsers, and iOS in particular, only allow for media to be played when it has been initiated by a user. In other words, we can't auto-play. On mobile, users will need to tap on a track once to load it, and then once again to play it. (Desktop browsers should autoplay normally).
+
+There is also a slight delay after a track is clicked to play and when it actually plays. I set this at about 400ms. The reason for this is that there can be a little bit of processing lag when starting up all 4 stems for the first time, so they end up playing out of sync. Giving it this extra bit of time helps mitigate this.
+
+Otherwise, the stems are not wholly in sync. This is the `max diff` number in the debug output. It's fine on desktop, but on an iPhone 5, this number got up to 1/10th of a second.
+
 
 ## Required Markup
 
