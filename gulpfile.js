@@ -58,7 +58,7 @@ gulp.task('css', function () {
 		precss,
 		math,
 		autoprefixer({ browsers: ['last 2 versions', 'Safari >= 8']}),
-		cssnano
+		// cssnano
 	];
 	return gulp.src(['./src/css/*.css', '!./src/css/_*.css'])
 		.pipe(sourcemaps.init())

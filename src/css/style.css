@@ -34,11 +34,13 @@ nav.tracks .tracks-nav li a {
     padding-bottom: 5px;
 }
 
-nav.tracks .tracks-nav .active a, nav.tracks .tracks-nav li a:hover {
+nav.tracks .tracks-nav .active a,
+nav.tracks .tracks-nav li a:hover {
     border-bottom: 3px solid #000;
 }
 
-a:hover, a:focus {
+a:hover,
+a:focus {
     outline: none;
     text-decoration: none;
     color: #000;
@@ -84,37 +86,29 @@ body {
 .shape1 {
     position: relative;
     z-index: 3;
-    -webkit-transform: translatey(0px);
-            transform: translatey(0px);
-    -webkit-animation: float 3s ease-in-out infinite;
-            animation: float 3s ease-in-out infinite;
+    transform: translatey(0px);
+    animation: float 3s ease-in-out infinite;
 }
 
 .shape2 {
     position: relative;
     z-index: 3;
-    -webkit-transform: translatey(0px);
-            transform: translatey(0px);
-    -webkit-animation: float2 3s ease-in-out infinite;
-            animation: float2 3s ease-in-out infinite;
+    transform: translatey(0px);
+    animation: float2 3s ease-in-out infinite;
 }
 
 .shape3 {
     position: relative;
     z-index: 3;
-    -webkit-transform: relative(0px);
-            transform: relative(0px);
-    -webkit-animation: float 3s ease-in-out infinite;
-            animation: float 3s ease-in-out infinite;
+    transform: relative(0px);
+    animation: float 3s ease-in-out infinite;
 }
 
 .shape4 {
     position: relative;
     z-index: 3;
-    -webkit-transform: translatey(0px);
-            transform: translatey(0px);
-    -webkit-animation: float2 3s ease-in-out infinite;
-            animation: float2 3s ease-in-out infinite;
+    transform: translatey(0px);
+    animation: float2 3s ease-in-out infinite;
 }
 
 
@@ -127,75 +121,30 @@ body {
     cursor: pointer;
 }*/
 
-@-webkit-keyframes float {
-    0% {
-        -webkit-transform: translatey(0px);
-                transform: translatey(0px);
-        -webkit-transform: translatex(0);
-                transform: translatex(0);
-    }
-    50% {
-        -webkit-transform: translatey(0);
-                transform: translatey(0);
-        -webkit-transform: translatex(5px);
-                transform: translatex(5px);
-    }
-    100% {
-        -webkit-transform: translatey(0px);
-                transform: translatey(0px);
-        -webkit-transform: translatex(0);
-                transform: translatex(0);
-    }
-}
-
 @keyframes float {
     0% {
-        -webkit-transform: translatey(0px);
-                transform: translatey(0px);
-        -webkit-transform: translatex(0);
-                transform: translatex(0);
+        transform: translatey(0px);
+        transform: translatex(0);
     }
     50% {
-        -webkit-transform: translatey(0);
-                transform: translatey(0);
-        -webkit-transform: translatex(5px);
-                transform: translatex(5px);
+        transform: translatey(0);
+        transform: translatex(5px);
     }
     100% {
-        -webkit-transform: translatey(0px);
-                transform: translatey(0px);
-        -webkit-transform: translatex(0);
-                transform: translatex(0);
-    }
-}
-
-@-webkit-keyframes float2 {
-    0% {
-        -webkit-transform: translatey(0px);
-                transform: translatey(0px);
-    }
-    50% {
-        -webkit-transform: translatey(-5px);
-                transform: translatey(-5px);
-    }
-    100% {
-        -webkit-transform: translatey(0px);
-                transform: translatey(0px);
+        transform: translatey(0px);
+        transform: translatex(0);
     }
 }
 
 @keyframes float2 {
     0% {
-        -webkit-transform: translatey(0px);
-                transform: translatey(0px);
+        transform: translatey(0px);
     }
     50% {
-        -webkit-transform: translatey(-5px);
-                transform: translatey(-5px);
+        transform: translatey(-5px);
     }
     100% {
-        -webkit-transform: translatey(0px);
-                transform: translatey(0px);
+        transform: translatey(0px);
     }
 }
 
@@ -219,7 +168,9 @@ body {
     z-index: 99999;
 }
 
-#nav-toggle span, #nav-toggle span:before, #nav-toggle span:after {
+#nav-toggle span,
+#nav-toggle span:before,
+#nav-toggle span:after {
     cursor: pointer;
     border-radius: 1px;
     height: 2px;
@@ -228,6 +179,10 @@ body {
     position: absolute;
     display: block;
     content: '';
+    -webkit-transition: all 250ms ease-in-out;
+    -moz-transition: all 250ms ease-in-out;
+    -ms-transition: all 250ms ease-in-out;
+    -o-transition: all 250ms ease-in-out;
     transition: all 250ms ease-in-out;
 }
 
@@ -273,23 +228,34 @@ body {
 
 .overlay {
     -webkit-transform: translateX(-300px);
+    -moz-transform: translateX(-300px);
+    -ms-transform: translateX(-300px);
+    -o-transform: translateX(-300px);
     transform: translateX(-300px);
     /* Force Hardware Acceleration in WebKit */
     -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
+    -ms-transform: translateZ(0);
+    -o-transform: translateZ(0);
     transform: translateZ(0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    transition-property: -webkit-transform;
+    -webkit-transition-property: -webkit-transform;
+    -moz-transition-property: -moz-transform;
     transition-property: transform;
-    transition-property: transform, -webkit-transform;
+    -webkit-transition-duration: 0.2s;
+    -moz-transition-duration: 0.2s;
     transition-duration: 0.2s;
     z-index: 999;
 }
 
 .open {
     -webkit-transform: translateX(300px);
+    -moz-transform: translateX(300px);
+    -ms-transform: translateX(300px);
+    -o-transform: translateX(300px);
     transform: translateX(300px);
+    -webkit-transition-duration: 0.2s;
+    -moz-transition-duration: 0.2s;
     transition-duration: 0.2s;
 }
-
-/*# sourceMappingURL=style.css.map */

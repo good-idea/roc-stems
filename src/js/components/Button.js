@@ -53,6 +53,7 @@ function makeButton(el, buttonIndex, publisher) {
 	 */
 
 	publisher.subscribe('enableButtons', (count) => {
+		// console.log('buttons:', count);
 		if (buttonIndex <= count - 1) {
 			button.enable();
 			button.activate();
@@ -64,7 +65,7 @@ function makeButton(el, buttonIndex, publisher) {
 
 	publisher.subscribe('disableButtons', () => {
 		button.deactivate();
-	})
+	});
 
 	button.element.addEventListener('click', () => {
 		button.toggleActive();

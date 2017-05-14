@@ -4,7 +4,7 @@
   "description": "Ride Or Cry | Stems sample",
   "scripts": {
     "start": "node server.js",
-    "watch": "nodemon server.js --watch index.html"
+    "watch": "nodemon server.js --ignore public --ext html"
   },
   "devDependencies": {
     "@artcommacode/q": "^2.2.2",

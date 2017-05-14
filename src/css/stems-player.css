@@ -60,10 +60,6 @@
   cursor: pointer;
 }
 
-.shape1 {
-  width: 20px;
-}
-
 .stem-button.enabled {
   opacity: 1;
 	pointer-events: initial;

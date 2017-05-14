@@ -67,23 +67,72 @@ function makeTrack(el, trackIndex, publisher) {
 	};
 
 	track.play = function playTrack() {
-		publisher.emit('trackPlayed', trackIndex);
 		track.active = true;
-		stems.map(stem => stem.play());
-		publisher.emit('enableButtons', stems.length);
-		track.element.classList.add('playing');
+		const initializeStems = [];
+		stems.map((stem) => {
+			initializeStems.push(stem.play(true));
+		});
+		Promise.all(initializeStems).then(() => {
+			publisher.emit('trackPlayed', trackIndex);
+			setTimeout(() => {
+				// const playAttempts = [];
+				stems.map((stem) => {
+					stem.reset();
+					stem.play();
+				});
+				publisher.emit('enableButtons', stems.length);
+				track.element.classList.add('playing');
+				track.startTime = Date.now();
+			}, 400);
+		});
 	};
 
 	track.stop = function stopTrack() {
 		track.active = false;
+		track.startTime = false;
 		stems.map(stem => stem.reset());
-		publisher.emit('enableButtons', stems.length);
+		// publisher.emit('enableButtons', stems.length);
 		track.element.classList.remove('playing');
 	};
+
+	track.getCurrentTime = function getCurrentTime() {
+		if (!track.active) return null;
+		const times = [];
+		stems.map((stem) => {
+			times.push(stem.audio.currentTime);
+		});
+		const stemMax = Math.max(...times);
+		console.log('mathmax: ', stemMax);
+
+		const now = Date.now();
+		const elapsed = (now - track.startTime) / 1000;
+
+		console.log('elapsed: ', elapsed);
+
+		// If all tracks have been muted, their currentTime values will have stopped counting.
+		// We're trying to simulate a "mute", but they are paused - so the elapsed time will be
+		// a more accurate time to start.
+		return Math.max(elapsed, stemMax);
+
+		return diff;
+	};
+
+	track.unmuteStem = function unmuteStem(stemIndex) {
+		if (track.active) {
+			const currentTime = track.getCurrentTime();
+			console.log(currentTime);
+			stems[stemIndex].unmute(currentTime);
+		}
+	};
+
+	track.muteStem = function muteStem(stemIndex) {
+		if (track.active) stems[stemIndex].mute();
+	}
 
 	/*
    * EVENTS
 	 */
+
 	track.element.addEventListener('click', handleClick);
 
 	publisher.subscribe('trackPlayed', (newIndex) => {
@@ -93,28 +142,25 @@ function makeTrack(el, trackIndex, publisher) {
 		}
 	});
 
-	publisher.subscribe('stemActivated', (stemIndex) => {
-		if (track.active) stems[stemIndex].unmute();
-	});
+	publisher.subscribe('stemActivated', track.unmuteStem);
 
-	publisher.subscribe('stemDeactivated', (stemIndex) => {
-		if (track.active) stems[stemIndex].mute();
-	});
+	publisher.subscribe('stemDeactivated', track.muteStem);
 
 	publisher.subscribe('allStemsToggled', () => {
 		if (track.active) {
 			const allEnabled = (stems.filter(stem => stem.active).length === stems.length);
 			if (allEnabled) {
-				stems.map(stem => stem.mute());
+				stems.map((stem, stemIndex) => track.muteStem(stemIndex));
 				publisher.emit('disableButtons', stems.length);
 			} else {
-				stems.map(stem => stem.unmute());
+				stems.map((stem, stemIndex) => track.unmuteStem(stemIndex));
 				publisher.emit('enableButtons', stems.length);
 			}
 		}
 	});
 
 	if (autoload) track.load();
+
 
 	/**
 	 * Debug logging
@@ -154,15 +200,17 @@ function makeTrack(el, trackIndex, publisher) {
 			let max;
 			stems.map((stem, index) => {
 				if (stem.audio) {
-					const activated = (stem.active) ? 'activated' : 'deactivated';
+					const activated = (stem.active) ? '(on)' : '(off)';
 					const currentTime = Math.round(stem.audio.currentTime * 10000) / 10000;
 					const formattedTime = formatDecimal(currentTime, 3, 4);
 
-					min = (min) ? Math.min(min, currentTime) : currentTime;
-					max = (max) ? Math.max(max, currentTime) : currentTime;
+					if (stem.active) {
+						min = (min) ? Math.min(min, currentTime) : currentTime;
+						max = (max) ? Math.max(max, currentTime) : currentTime;
+					}
 					if (currentTime === 0) stem.audio.play();
 					try {
-						debugString.push(`   stem ${index}: ${formattedTime} | ${stem.fileName} - ${activated} | ${stem.audio.buffered.end(0)} / ${stem.audio.duration}`);
+						debugString.push(`   stem ${index + 1}: ${formattedTime} | ${stem.fileName} - ${activated}`);
 					} catch (e) {
 						// do nothing
 					}
@@ -173,8 +221,6 @@ function makeTrack(el, trackIndex, publisher) {
 			debugOutput.innerHTML = debugString.join('<br>');
 		}
 	}, 100);
-
-	track.stemsCount = stems.length;
 
 
 	return track;
