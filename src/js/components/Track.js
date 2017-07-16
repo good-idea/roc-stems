@@ -113,8 +113,6 @@ function makeTrack(el, trackIndex, publisher) {
 		// We're trying to simulate a "mute", but they are paused - so the elapsed time will be
 		// a more accurate time to start.
 		return Math.max(elapsed, stemMax);
-
-		return diff;
 	};
 
 	track.unmuteStem = function unmuteStem(stemIndex) {
@@ -127,7 +125,7 @@ function makeTrack(el, trackIndex, publisher) {
 
 	track.muteStem = function muteStem(stemIndex) {
 		if (track.active) stems[stemIndex].mute();
-	}
+	};
 
 	/*
    * EVENTS
@@ -208,7 +206,11 @@ function makeTrack(el, trackIndex, publisher) {
 						min = (min) ? Math.min(min, currentTime) : currentTime;
 						max = (max) ? Math.max(max, currentTime) : currentTime;
 					}
-					if (currentTime === 0) stem.audio.play();
+					if (currentTime === 0) {
+						stem.audio.play().catch(() => {
+							track.active = false;
+						});
+					}
 					try {
 						debugString.push(`   stem ${index + 1}: ${formattedTime} | ${stem.fileName} - ${activated}`);
 					} catch (e) {

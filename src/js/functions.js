@@ -8,8 +8,4 @@ jQuery(document).ready(function ($) {
         $('.overlay').toggleClass('open');
         $('#nav-toggle').toggleClass('open');
     });
-
-    //    document.querySelector("#nav-toggle").addEventListener("click", function () {
-    //        this.classList.toggle("active");
-    //    });
 });

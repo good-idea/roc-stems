@@ -35,7 +35,6 @@ class PubSubEmitter {
 	}
 
 	emit(topic, ...args) {
-		console.log("Event: ", topic);
 		// get the listeners subscribed to the topic
 		const listeners = this.listeners.get(topic);
 
